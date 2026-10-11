@@ -29,6 +29,26 @@ class Card:
 
         return f"{suit_letter}-{display_val}"
 
+    # =======================================================
+    # STEP 4: THE RULE METHOD
+    # This allows a card to look at an incoming card and say True or False
+    # =======================================================
+    def can_stack_on_me(self, incoming_card):
+        # Rule A: The target card on the board MUST be face up to build on it
+        if not self.is_face_up:
+            return False
+
+        # Rule B: Colors must be completely opposite
+        if self.color == incoming_card.color:
+            return False
+
+        # Rule C: Incoming card must be exactly one value lower
+        if incoming_card.value != self.value - 1:
+            return False
+
+        # If it survives all checks, the move is perfectly legal!
+        return True
+
 
 # ==========================================
 # 2. THE FACTORY: Stamping out 52 Cards
@@ -115,8 +135,13 @@ def display_board(tableau, draw_pile):
 
 # --- UPDATE YOUR MAIN TEST LOOP TO VISUALLY PRINT IT ---
 if __name__ == "__main__":
-    deck = create_and_shuffle_deck()
-    columns, remainder_pile = setup_solitaire_board(deck)
+    # Test our rule validation logic manually
+    base_card = Card("Spades", 8, "Black")
+    base_card.is_face_up = True # Must flip it up to test stacking
     
-    # Trigger your brand new visual display function!
-    display_board(columns, remainder_pile)
+    valid_card = Card("Hearts", 7, "Red")
+    invalid_card = Card("Clubs", 7, "Black") # Wrong color!
+    
+    print("--- Testing Solitaire Rule Framework ---")
+    print(f"Can Red 7 stack on Black 8? {base_card.can_stack_on_me(valid_card)}")   # Should print: True
+    print(f"Can Black 7 stack on Black 8? {base_card.can_stack_on_me(invalid_card)}") # Should print: False
