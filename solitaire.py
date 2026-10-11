@@ -78,7 +78,6 @@ def display_board(tableau, draw_pile, waste_pile):
     top_waste = waste_pile[-1] if waste_pile else "Empty"
     print(f"  DRAW PILE: [{len(draw_pile)} left]  |  WASTE PILE: [{top_waste}]")
     
-    print(f"  DRAW PILE: [{len(draw_pile)} cards left]  |  Type 'd' to draw a card")
     print("=" * 55)
     print("  Col 1   Col 2   Col 3   Col 4   Col 5   Col 6   Col 7")
     print("  -----------------------------------------------------")
