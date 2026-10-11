@@ -16,11 +16,15 @@ class Card:
         symbol = suit_symbols.get(self.suit, self.suit[0])
         
         display_val = self.value
-        if self.value == 1: display_val = "A"
-        elif self.value == 11: display_val = "J"
-        elif self.value == 12: display_val = "Q"
-        elif self.value == 13: display_val = "K"
-        
+        if self.value == 1:
+            display_val = "A"
+        elif self.value == 11:
+            display_val = "J"
+        elif self.value == 12:
+            display_val = "Q"
+        elif self.value == 13:
+            display_val = "K"
+
         return f"{symbol}-{display_val}"
 
     def can_stack_on_me(self, incoming_card):
@@ -68,8 +72,12 @@ def setup_solitaire_board(shuffled_deck):
 # ==========================================
 # 4. THE LAYOUT: Terminal Interface
 # ==========================================
-def display_board(tableau, draw_pile):
+def display_board(tableau, draw_pile, waste_pile):
     print("\n" + "=" * 55)
+    # Show the top card of the waste pile if it exists, otherwise show Empty
+    top_waste = waste_pile[-1] if waste_pile else "Empty"
+    print(f"  DRAW PILE: [{len(draw_pile)} left]  |  WASTE PILE: [{top_waste}]")
+    
     print(f"  DRAW PILE: [{len(draw_pile)} cards left]  |  Type 'd' to draw a card")
     print("=" * 55)
     print("  Col 1   Col 2   Col 3   Col 4   Col 5   Col 6   Col 7")
@@ -161,11 +169,12 @@ def move_card(tableau, from_col_idx, to_col_idx):
 def play_game():
     deck = create_and_shuffle_deck()
     tableau, draw_pile = setup_solitaire_board(deck)
+    waste_pile = []  # <--- Add this empty list to hold drawn cards
     
     print("♠️ ♥️ Welcome to Terminal Solitaire Engine ♦️ ♣️")
     
     while True:
-        display_board(tableau, draw_pile)
+        display_board(tableau, draw_pile, waste_pile)
         
         # Get input command from the user
         command = input("Enter command ('m' to move, 'd' to draw, 'q' to quit): ").strip().lower()
@@ -176,32 +185,60 @@ def play_game():
             
         elif command == 'd':
             if draw_pile:
-                # Cycle a card from draw pile to column 1 as an easy simulation rule
                 card = draw_pile.pop(0)
                 card.is_face_up = True
-                # Find the shortest column to drop the drawn card into
-                shortest_col = min(tableau, key=len)
-                shortest_col.append(card)
-                print(f"🃏 Dealt {card} onto the board.")
+                waste_pile.append(card)  # <--- Put it in the waste pile instead of a column!
+                print(f"🃏 Drew {card} into the Waste Pile.")
             else:
-                print("❌ Out of cards in the draw pile!")
+                # Optional: Cycle the waste pile back into the draw pile if it runs out
+                if waste_pile:
+                    draw_pile = list(reversed(waste_pile))
+                    for card in draw_pile:
+                        card.is_face_up = False
+                    waste_pile = []
+                    print("🔄 Recycled the waste pile back into the draw pile.")
+                else:
+                    print("❌ Out of cards completely!")
                 
         elif command == 'm':
-            try:
-                src = int(input("Source Column (1-7): "))
-                dst = int(input("Destination Column (1-7): "))
-                
-                if move_card(tableau, src, dst):
-                    print("✅ Move executed.")
+            choice = input("Move from (t)ableau columns or (w)aste pile? ").strip().lower()
+            
+            if choice == 'w':
+                if not waste_pile:
+                    print("❌ Waste pile is empty!")
+                    continue
+                try:
+                    dst = int(input("Destination Column (1-7): "))
+                    to_idx = dst - 1
+                    moving_card = waste_pile[-1]
                     
-                    # SYSTEM TRIGGER: Auto-flip exposed cards face up
-                    if tableau[src - 1] and not tableau[src - 1][-1].is_face_up:
-                        tableau[src - 1][-1].is_face_up = True
-                        print(f"🔄 Flipped top card of Column {src} face up!")
-            except ValueError:
-                print("❌ Please enter valid numerical inputs.")
-        else:
-            print("❌ Unknown command.")
+                    # Validate and execute the move onto the board
+                    if not tableau[to_idx]:
+                        if moving_card.value == 13:
+                            waste_pile.pop()
+                            tableau[to_idx].append(moving_card)
+                            print("✅ Moved King from waste to empty column.")
+                        else:
+                            print("❌ Only a King can open an empty column!")
+                    else:
+                        target_card = tableau[to_idx][-1]
+                        if target_card.can_stack_on_me(moving_card):
+                            waste_pile.pop()
+                            tableau[to_idx].append(moving_card)
+                            print("✅ Move successful.")
+                        else:
+                            print(f"❌ Cannot place {moving_card} on {target_card}.")
+                except ValueError:
+                    print("❌ Invalid input.")
+                    
+            elif choice == 't':
+                try:
+                    src = int(input("Move from column (1-7): "))
+                    dst = int(input("Move to column (1-7): "))
+                    move_card(tableau, src, dst)
+                except ValueError:
+                    print("❌ Invalid input.")
+
 
 
 if __name__ == "__main__":
