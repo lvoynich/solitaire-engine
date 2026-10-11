@@ -58,14 +58,37 @@ def create_and_shuffle_deck():
 
     return deck
 
+def setup_solitaire_board(shuffled_deck):
+    # Create a list containing 7 empty lists (one for each column)
+    tableau = [[] for _ in range(7)]
+    
+    # Nested loop to deal cards incrementally
+    for i in range(7):
+        for j in range(i, 7):
+            # Take the top card off our shuffled deck list
+            card = shuffled_deck.pop(0)
+            
+            # If it's the very last card being added to this specific column, flip it face up
+            if j == i:
+                card.is_face_up = True
+                
+            # Place the card into the correct column list
+            tableau[j].append(card)
+            
+    # The remaining cards left in the deck become our Draw Pile (Stock)
+    draw_pile = shuffled_deck
+    
+    return tableau, draw_pile
 
-# ==========================================
-# 3. COMPILATION RUN: Let's test Step 1!
-# ==========================================
+# --- UPDATE YOUR MAIN TEST LOOP AT THE BOTTOM ---
 if __name__ == "__main__":
-    my_deck = create_and_shuffle_deck()
+    deck = create_and_shuffle_deck()
+    
+    # Run the setup function
+    columns, remainder_pile = setup_solitaire_board(deck)
+    
+    print(f"Board initialized successfully!")
+    print(f"Cards left in draw pile: {len(remainder_pile)}")
+    print(f"Number of cards in Column 7: {len(columns[6])}")
+    print(f"Is the top card of Column 7 face up? {columns[6][-1].is_face_up}")
 
-    print(f"Total cards created: {len(my_deck)}")
-    print("--- Here is a sample of your shuffled deck ---")
-    # Print just the first 10 cards to verify it worked
-    print(my_deck[:10])
