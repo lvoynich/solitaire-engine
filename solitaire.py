@@ -109,26 +109,49 @@ def move_card(tableau, from_col_idx, to_col_idx):
         print("❌ Error: The source column has no cards to move!")
         return False
         
-    moving_card = tableau[from_idx][-1]
+    # =======================================================
+    # ADVANCED STACK MOVEMENT LOGIC
+    # =======================================================
     
-    # Rule validation for an empty target column
+    # 1. Find the first (deepest) face-up card in the source column
+    first_face_up_idx = -1
+    for idx, card in enumerate(tableau[from_idx]):
+        if card.is_face_up:
+            first_face_up_idx = idx
+            break
+            
+    if first_face_up_idx == -1:
+        print("❌ Error: No face-up cards found to move!")
+        return False
+        
+    # 2. Slice the entire stack of face-up cards from that point to the end
+    moving_stack = tableau[from_idx][first_face_up_idx:]
+    deepest_moving_card = moving_stack[0] # The card that will actually land on the new pile
+    
+    # Case A: Moving onto an empty destination column
     if not tableau[to_idx]:
-        if moving_card.value == 13:  # Only Kings
-            tableau[from_idx].pop()
-            tableau[to_idx].append(moving_card)
+        if deepest_moving_card.value == 13:  # Only Kings can start empty columns
+            # Remove the stack from the source column
+            tableau[from_idx] = tableau[from_idx][:first_face_up_idx]
+            # Extend the destination column with the entire moving stack
+            tableau[to_idx].extend(moving_stack)
             return True
         else:
             print("❌ Error: Only a King can open an empty column!")
             return False
             
-    # Rule validation for an active target column
+    # Case B: Moving onto a column that already has cards
     target_card = tableau[to_idx][-1]
-    if target_card.can_stack_on_me(moving_card):
-        tableau[from_idx].pop()
-        tableau[to_idx].append(moving_card)
+    
+    # Check the rules using the deepest card in our moving stack
+    if target_card.can_stack_on_me(deepest_moving_card):
+        # Slice off the stack from the old column
+        tableau[from_idx] = tableau[from_idx][:first_face_up_idx]
+        # Append the entire stack to the new column
+        tableau[to_idx].extend(moving_stack)
         return True
     else:
-        print(f"❌ Move Rejected! You cannot place a {moving_card} on a {target_card}.")
+        print(f"❌ Move Rejected! You cannot place the stack starting with {deepest_moving_card} on {target_card}.")
         return False
 
 
