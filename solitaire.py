@@ -68,12 +68,23 @@ def setup_solitaire_board(shuffled_deck):
 # ==========================================
 # 4. THE LAYOUT: Unified Terminal Interface
 # ==========================================
-def display_board(tableau, draw_pile, waste_pile):
-    print("\n" + "=" * 55)
-    # Single, clean dashboard layout for our card pools
+def display_board(tableau, draw_pile, waste_pile, foundations):
+    print("\n" + "=" * 65)
+    
+    # Format the 4 foundations for display (showing the top card or empty brackets)
+    found_strings = []
+    for f_pile in foundations:
+        if f_pile:
+            found_strings.append(f"[{f_pile[-1]}]") # Show top card
+        else:
+            found_strings.append("[ . ]") # Show empty placeholder
+            
     top_waste = waste_pile[-1] if waste_pile else "Empty"
-    print(f"  DRAW PILE: [{len(draw_pile)} Hidden]  |  WASTE PILE: [{top_waste}]")
-    print("=" * 55)
+    
+    # The ultimate terminal status dashboard
+    print(f"  STOCK: [{len(draw_pile)} Hidden]  |  WASTE: [{top_waste}]")
+    print(f"  FOUNDATIONS:  {found_strings[0]}   {found_strings[1]}   {found_strings[2]}   {found_strings[3]}")
+    print("=" * 65)
     print("  Col 1   Col 2   Col 3   Col 4   Col 5   Col 6   Col 7")
     print("  -----------------------------------------------------")
     
@@ -93,7 +104,8 @@ def display_board(tableau, draw_pile, waste_pile):
             else:
                 row_string += "        "
         print(row_string)
-    print("=" * 55 + "\n")
+    print("=" * 65 + "\n")
+
 
 
 # ==========================================
@@ -145,6 +157,22 @@ def move_stack(tableau, from_col_idx, to_col_idx):
         print(f"❌ Move Rejected! Cannot place stack starting with {deepest_moving_card} on {target_card}.")
         return False
 
+def move_to_foundation(card, foundation_pile):
+    # Rule 1: If the foundation pile is empty, it MUST be an Ace (value 1)
+    if not foundation_pile:
+        if card.value == 1:
+            return True
+        else:
+            print("❌ Error: Foundations must start with an Ace!")
+            return False
+            
+    # Rule 2: If it's not empty, it must match the suit and be exactly 1 value higher
+    top_card = foundation_pile[-1]
+    if card.suit == top_card.suit and card.value == top_card.value + 1:
+        return True
+    else:
+        print(f"❌ Move Rejected! You cannot place a {card} on {top_card}.")
+        return False
 
 # ==========================================
 # 6. THE ENGINE: Continuous Game Loop
@@ -153,11 +181,12 @@ def play_game():
     deck = create_and_shuffle_deck()
     tableau, draw_pile = setup_solitaire_board(deck)
     waste_pile = []
+    foundations = [[] for _ in range(4)]  # <--- Add this! Tracks 4 foundation lists
     
     print("♠️ ♥️ Welcome to Terminal Solitaire Engine ♦️ ♣️")
     
     while True:
-        display_board(tableau, draw_pile, waste_pile)
+        display_board(tableau, draw_pile, waste_pile,foundations)
         command = input("Enter command ('m' to move, 'd' to draw, 'q' to quit): ").strip().lower()
         
         if command == 'q':
