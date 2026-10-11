@@ -11,20 +11,16 @@ class Card:
         self.is_face_up = False
     
     def __repr__(self):
-        # Human-readable visual representation
+        # Using clear visual suit symbols for the text interface
         suit_symbols = {"Hearts": "♥", "Diamonds": "♦", "Spades": "♠", "Clubs": "♣"}
-        symbol = suit_symbols.get(self.suit, self.suit[0])
+        symbol = suit_symbols.get(self.suit, self.suit)
         
         display_val = self.value
-        if self.value == 1:
-            display_val = "A"
-        elif self.value == 11:
-            display_val = "J"
-        elif self.value == 12:
-            display_val = "Q"
-        elif self.value == 13:
-            display_val = "K"
-
+        if self.value == 1: display_val = "A"
+        elif self.value == 11: display_val = "J"
+        elif self.value == 12: display_val = "Q"
+        elif self.value == 13: display_val = "K"
+        
         return f"{symbol}-{display_val}"
 
     def can_stack_on_me(self, incoming_card):
@@ -70,14 +66,13 @@ def setup_solitaire_board(shuffled_deck):
 
 
 # ==========================================
-# 4. THE LAYOUT: Terminal Interface
+# 4. THE LAYOUT: Unified Terminal Interface
 # ==========================================
 def display_board(tableau, draw_pile, waste_pile):
     print("\n" + "=" * 55)
-    # Show the top card of the waste pile if it exists, otherwise show Empty
+    # Single, clean dashboard layout for our card pools
     top_waste = waste_pile[-1] if waste_pile else "Empty"
-    print(f"  DRAW PILE: [{len(draw_pile)} left]  |  WASTE PILE: [{top_waste}]")
-    
+    print(f"  DRAW PILE: [{len(draw_pile)} Hidden]  |  WASTE PILE: [{top_waste}]")
     print("=" * 55)
     print("  Col 1   Col 2   Col 3   Col 4   Col 5   Col 6   Col 7")
     print("  -----------------------------------------------------")
@@ -92,7 +87,7 @@ def display_board(tableau, draw_pile, waste_pile):
             if row_index < len(col):
                 card = col[row_index]
                 if card.is_face_up:
-                    row_string += f"{str(card):<5}   "  # Clean spacing alignment
+                    row_string += f"{str(card):<5}   "
                 else:
                     row_string += "[###]   "
             else:
@@ -104,7 +99,7 @@ def display_board(tableau, draw_pile, waste_pile):
 # ==========================================
 # 5. THE ACTIONS: Movement Core Logic
 # ==========================================
-def move_card(tableau, from_col_idx, to_col_idx):
+def move_stack(tableau, from_col_idx, to_col_idx):
     from_idx = from_col_idx - 1
     to_idx = to_col_idx - 1
     
@@ -116,11 +111,7 @@ def move_card(tableau, from_col_idx, to_col_idx):
         print("❌ Error: The source column has no cards to move!")
         return False
         
-    # =======================================================
-    # ADVANCED STACK MOVEMENT LOGIC
-    # =======================================================
-    
-    # 1. Find the first (deepest) face-up card in the source column
+    # Find the deepest face-up card in the source column to slice the stack
     first_face_up_idx = -1
     for idx, card in enumerate(tableau[from_idx]):
         if card.is_face_up:
@@ -131,34 +122,27 @@ def move_card(tableau, from_col_idx, to_col_idx):
         print("❌ Error: No face-up cards found to move!")
         return False
         
-    # 2. Slice the entire stack of face-up cards from that point to the end
     moving_stack = tableau[from_idx][first_face_up_idx:]
-    deepest_moving_card = moving_stack[0] # The card that will actually land on the new pile
+    deepest_moving_card = moving_stack[0]
     
-    # Case A: Moving onto an empty destination column
+    # Empty column validation rule (Only Kings)
     if not tableau[to_idx]:
-        if deepest_moving_card.value == 13:  # Only Kings can start empty columns
-            # Remove the stack from the source column
+        if deepest_moving_card.value == 13:
             tableau[from_idx] = tableau[from_idx][:first_face_up_idx]
-            # Extend the destination column with the entire moving stack
             tableau[to_idx].extend(moving_stack)
             return True
         else:
             print("❌ Error: Only a King can open an empty column!")
             return False
             
-    # Case B: Moving onto a column that already has cards
+    # Active column validation rule
     target_card = tableau[to_idx][-1]
-    
-    # Check the rules using the deepest card in our moving stack
     if target_card.can_stack_on_me(deepest_moving_card):
-        # Slice off the stack from the old column
         tableau[from_idx] = tableau[from_idx][:first_face_up_idx]
-        # Append the entire stack to the new column
         tableau[to_idx].extend(moving_stack)
         return True
     else:
-        print(f"❌ Move Rejected! You cannot place the stack starting with {deepest_moving_card} on {target_card}.")
+        print(f"❌ Move Rejected! Cannot place stack starting with {deepest_moving_card} on {target_card}.")
         return False
 
 
@@ -168,14 +152,12 @@ def move_card(tableau, from_col_idx, to_col_idx):
 def play_game():
     deck = create_and_shuffle_deck()
     tableau, draw_pile = setup_solitaire_board(deck)
-    waste_pile = []  # <--- Add this empty list to hold drawn cards
+    waste_pile = []
     
     print("♠️ ♥️ Welcome to Terminal Solitaire Engine ♦️ ♣️")
     
     while True:
         display_board(tableau, draw_pile, waste_pile)
-        
-        # Get input command from the user
         command = input("Enter command ('m' to move, 'd' to draw, 'q' to quit): ").strip().lower()
         
         if command == 'q':
@@ -186,16 +168,14 @@ def play_game():
             if draw_pile:
                 card = draw_pile.pop(0)
                 card.is_face_up = True
-                waste_pile.append(card)  # <--- Put it in the waste pile instead of a column!
-                print(f"🃏 Drew {card} into the Waste Pile.")
+                waste_pile.append(card)
             else:
-                # Optional: Cycle the waste pile back into the draw pile if it runs out
                 if waste_pile:
                     draw_pile = list(reversed(waste_pile))
                     for card in draw_pile:
                         card.is_face_up = False
                     waste_pile = []
-                    print("🔄 Recycled the waste pile back into the draw pile.")
+                    print("🔄 Recycled waste pile back into draw pile.")
                 else:
                     print("❌ Out of cards completely!")
                 
@@ -211,12 +191,10 @@ def play_game():
                     to_idx = dst - 1
                     moving_card = waste_pile[-1]
                     
-                    # Validate and execute the move onto the board
                     if not tableau[to_idx]:
                         if moving_card.value == 13:
                             waste_pile.pop()
                             tableau[to_idx].append(moving_card)
-                            print("✅ Moved King from waste to empty column.")
                         else:
                             print("❌ Only a King can open an empty column!")
                     else:
@@ -224,7 +202,6 @@ def play_game():
                         if target_card.can_stack_on_me(moving_card):
                             waste_pile.pop()
                             tableau[to_idx].append(moving_card)
-                            print("✅ Move successful.")
                         else:
                             print(f"❌ Cannot place {moving_card} on {target_card}.")
                 except ValueError:
@@ -232,12 +209,21 @@ def play_game():
                     
             elif choice == 't':
                 try:
-                    src = int(input("Move from column (1-7): "))
-                    dst = int(input("Move to column (1-7): "))
-                    move_card(tableau, src, dst)
+                    src = int(input("Source Column (1-7): "))
+                    dst = int(input("Destination Column (1-7): "))
+                    
+                    if src == dst:
+                        print("❌ Source and destination cannot be the same.")
+                        continue
+                        
+                    if move_stack(tableau, src, dst):
+                        # Auto-flip the newly exposed card on the source column
+                        if tableau[src - 1] and not tableau[src - 1][-1].is_face_up:
+                            tableau[src - 1][-1].is_face_up = True
                 except ValueError:
-                    print("❌ Invalid input.")
-
+                    print("❌ Please enter valid numerical inputs.")
+        else:
+            print("❌ Unknown command.")
 
 
 if __name__ == "__main__":
