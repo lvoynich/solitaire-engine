@@ -80,15 +80,43 @@ def setup_solitaire_board(shuffled_deck):
     
     return tableau, draw_pile
 
-# --- UPDATE YOUR MAIN TEST LOOP AT THE BOTTOM ---
+def display_board(tableau, draw_pile):
+    print("\n" + "=" * 40)
+    print(f"DRAW PILE: [{len(draw_pile)} cards remaining]")
+    print("=" * 40)
+    
+    # 1. Print the column headers (1 through 7)
+    print("  Col 1   Col 2   Col 3   Col 4   Col 5   Col 6   Col 7")
+    print("  -----------------------------------------------------")
+    
+    # 2. Find the tallest column height so we know how many horizontal rows to print
+    max_rows = max(len(column) for column in tableau)
+    
+    # 3. Loop row by row
+    for row_index in range(max_rows):
+        row_string = "    "
+        
+        for col in tableau:
+            # If this column has a card at this row index, print it
+            if row_index < len(col):
+                card = col[row_index]
+                
+                # Check our Class attribute: is it face up?
+                if card.is_face_up:
+                    row_string += f"{card}    "  # Prints the shortcut (e.g. "S-K")
+                else:
+                    row_string += "[###]   "  # Hides face-down cards like a real game!
+            else:
+                # If the column is shorter than this row index, print empty space
+                row_string += "        "
+                
+        print(row_string)
+    print("=" * 40 + "\n")
+
+# --- UPDATE YOUR MAIN TEST LOOP TO VISUALLY PRINT IT ---
 if __name__ == "__main__":
     deck = create_and_shuffle_deck()
-    
-    # Run the setup function
     columns, remainder_pile = setup_solitaire_board(deck)
     
-    print(f"Board initialized successfully!")
-    print(f"Cards left in draw pile: {len(remainder_pile)}")
-    print(f"Number of cards in Column 7: {len(columns[6])}")
-    print(f"Is the top card of Column 7 face up? {columns[6][-1].is_face_up}")
-
+    # Trigger your brand new visual display function!
+    display_board(columns, remainder_pile)
